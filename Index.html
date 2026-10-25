@@ -1,0 +1,268 @@
+
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MacBook Neo Savings Tracker</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;padding:20px;background:#f1f4fb;color:#172033;font-family:-apple-system,BlinkMacSystemFont,sans-serif}
+main{max-width:780px;margin:auto}
+h1{font-size:32px;letter-spacing:-1px}
+.card{background:white;border:1px solid #e1e6f0;border-radius:18px;padding:18px;margin:14px 0;box-shadow:0 5px 20px #17203308}
+.muted{color:#697386;font-size:13px;line-height:1.5}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}
+.stat{background:#f5f7fc;padding:12px;border-radius:12px;min-width:0}
+.stat strong{display:block;font-size:18px;margin-top:6px;overflow-wrap:anywhere}
+.big{font-size:32px;font-weight:800;overflow-wrap:anywhere}
+label{display:block;font-size:12px;font-weight:700;color:#697386;margin:10px 0 6px}
+input{width:100%;padding:12px;border:1px solid #d8deeb;border-radius:10px;font:inherit}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+button{padding:11px 14px;border:0;border-radius:10px;font-weight:700;cursor:pointer;margin:5px 4px 0 0}
+.primary{background:#315cf5;color:white}
+.secondary{background:#eaf0ff;color:#2447bd}
+.danger{background:#fff0f0;color:#b93838}
+.track{height:14px;background:#e8ebf3;border-radius:20px;overflow:hidden;margin:15px 0 8px}
+#bar{height:100%;width:0;background:linear-gradient(90deg,#315cf5,#26ad7b);transition:width .2s}
+table{width:100%;border-collapse:collapse;font-size:13px}
+td,th{text-align:left;padding:10px 4px;border-bottom:1px solid #e5e8f0}
+td:last-child,th:last-child{text-align:right}
+.notice{background:#fff8e5;padding:12px;border-radius:10px;font-size:12px;line-height:1.5}
+@media(max-width:520px){.grid{grid-template-columns:1fr}.stats{grid-template-columns:1fr 1fr}.big{font-size:28px}body{padding:12px}}
+</style>
+</head>
+<body>
+<main>
+<h1>MacBook Neo Savings 💻</h1>
+<p class="muted">256GB model · Save toward your laptop, track deposits, and watch your progress.</p>
+
+<div class="card">
+<div class="muted">TOTAL SAVED</div>
+<div class="big" id="saved">$0.00</div>
+<p class="muted" id="savedMessage">Your savings progress appears here.</p>
+<div class="muted">STILL NEEDED</div>
+<div class="big" id="remaining">$761.04</div>
+<div class="track"><div id="bar"></div></div>
+<strong id="percent">0%</strong> <span class="muted">of your goal</span>
+<p class="muted" id="progressText"></p>
+<div class="stats">
+<div class="stat"><span class="muted">Laptop</span><strong id="laptop">$699.00</strong></div>
+<div class="stat"><span class="muted">Tax</span><strong id="tax">$62.04</strong></div>
+<div class="stat"><span class="muted">Total goal</span><strong id="total">$761.04</strong></div>
+</div>
+</div>
+
+<div class="card">
+<h3>Purchase cost</h3>
+<div class="grid">
+<div><label for="price">Laptop price ($)</label><input id="price" type="number" min="0" step=".01" value="699"></div>
+<div><label for="rate">NYC sales tax (%)</label><input id="rate" type="number" min="0" max="30" step=".001" value="8.875"></div>
+<div><label for="shipping">Shipping ($)</label><input id="shipping" type="number" min="0" step=".01" value="0"></div>
+<div><label for="extras">Other fees/accessories ($)</label><input id="extras" type="number" min="0" step=".01" value="0"></div>
+<div><label for="monthly">Savings per month ($)</label><input id="monthly" type="number" min="0" step=".01" value="50"></div>
+<div><label for="balance">Set current balance ($)</label><input id="balance" type="number" min="0" step=".01" value="0"></div>
+</div>
+<button class="primary" id="saveSettings">Save cost settings</button>
+<button class="secondary" id="setBalance">Set balance</button>
+<p class="muted" id="costSummary"></p>
+</div>
+
+<div class="card">
+<h3>Add a deposit</h3>
+<label for="deposit">Amount to save ($)</label>
+<input id="deposit" type="number" min=".01" step=".01" placeholder="e.g. 25">
+<button class="primary" id="add">Add deposit</button>
+<h3>Subtract money</h3>
+<label for="withdraw">Amount to subtract ($)</label>
+<input id="withdraw" type="number" min=".01" step=".01" placeholder="e.g. 5">
+<button class="secondary" id="subtract">Subtract</button>
+</div>
+
+<div class="card">
+<h3>Savings timeline</h3>
+<div class="big" id="months">16 months</div>
+<p class="muted" id="monthlyText">Estimated time to reach your goal.</p>
+</div>
+
+<div class="card">
+<h3>Activity history</h3>
+<div style="overflow-x:auto">
+<table>
+<thead><tr><th>Date</th><th>Activity</th><th>Amount</th><th></th></tr></thead>
+<tbody id="history"></tbody>
+</table>
+</div>
+<p class="muted" id="empty">No deposits recorded yet.</p>
+<button class="secondary" id="export">Export backup</button>
+<button class="secondary" id="importButton">Import backup</button>
+<input id="importFile" type="file" accept=".json,application/json" hidden>
+<button class="danger" id="clearHistory">Clear history</button>
+</div>
+
+<div class="card notice">
+<strong>Tax and fees:</strong> This uses an estimated 8.875% NYC sales tax rate. On $699, that is about $62.04, making the estimated total $761.04 before shipping or extras. The actual checkout amount can vary. Shipping, accessories, and protection plans are only included if you enter them.
+<br><br>
+Your progress is saved in this browser on this device. Use Export backup to keep a copy. Import that backup if you need to restore it.
+</div>
+</main>
+
+<script>
+(function(){
+const KEY="macbookNeoSavings_v1";
+const defaults={
+ price:699,rate:8.875,shipping:0,extras:0,
+ saved:0,monthly:50,history:[]
+};
+let state={...defaults};
+const $=id=>document.getElementById(id);
+const money=n=>new Intl.NumberFormat("en-US",{
+ style:"currency",currency:"USD"
+}).format(Number(n)||0);
+const cents=n=>Math.round((Number(n)||0)*100)/100;
+
+function persist(){
+ try{
+  localStorage.setItem(KEY,JSON.stringify(state));
+ }catch(e){
+  alert("Browser storage is unavailable. Export a backup to preserve progress.");
+ }
+}
+function load(){
+ try{
+  const data=JSON.parse(localStorage.getItem(KEY)||"null");
+  if(data) state={...defaults,...data};
+ }catch(e){}
+}
+function goal(){
+ const p=Math.max(0,Number(state.price)||0);
+ return cents(p+p*Math.max(0,Number(state.rate)||0)/100+
+  Math.max(0,Number(state.shipping)||0)+Math.max(0,Number(state.extras)||0));
+}
+function render(){
+ const g=goal(),s=Math.max(0,state.saved),r=Math.max(0,cents(g-s));
+ const pct=g?Math.min(100,s/g*100):100;
+
+ $("saved").textContent=money(s);
+ $("remaining").textContent=money(r);
+ $("percent").textContent=Math.round(pct)+"%";
+ $("bar").style.width=pct+"%";
+ $("progressText").textContent=money(s)+" saved toward "+money(g);
+ $("savedMessage").textContent=pct>=100?"Goal reached! You have enough saved.":"Keep going — every deposit helps.";
+ $("laptop").textContent=money(state.price);
+ $("tax").textContent=money(state.price*state.rate/100);
+ $("total").textContent=money(g);
+ $("costSummary").textContent="Estimated total: "+money(g)+
+  " including tax, "+money(state.shipping)+" shipping, and "+
+  money(state.extras)+" in other costs.";
+
+ ["price","rate","shipping","extras","monthly"].forEach(id=>{
+  $(id).value=state[id];
+ });
+ $("balance").value=state.saved;
+
+ const m=Math.max(0,Number(state.monthly)||0);
+ if(r<=0){
+  $("months").textContent="0 months";
+  $("monthlyText").textContent="Your goal is fully funded!";
+ }else if(m===0){
+  $("months").textContent="—";
+  $("monthlyText").textContent="Enter a monthly savings amount.";
+ }else{
+  const n=Math.ceil(r/m);
+  $("months").textContent=n+" month"+(n===1?"":"s");
+  $("monthlyText").textContent="At "+money(m)+" per month.";
+ }
+
+ const tbody=$("history");
+ tbody.replaceChildren();
+ [...state.history].reverse().forEach(t=>{
+  const tr=document.createElement("tr");
+  [t.date,t.label,(t.amount>=0?"+":"−")+money(Math.abs(t.amount))]
+   .forEach((v,i)=>{
+    const td=document.createElement("td");
+    td.textContent=v;
+    if(i===2)td.style.color=t.amount>=0?"#16845b":"#b93838";
+    tr.appendChild(td);
+   });
+  const td=document.createElement("td");
+  const btn=document.createElement("button");
+  btn.className="secondary";btn.textContent="Undo";
+  btn.onclick=()=>{
+   state.saved=Math.max(0,cents(state.saved-t.amount));
+   state.history=state.history.filter(x=>x.id!==t.id);
+   persist();render();
+  };
+  td.appendChild(btn);tr.appendChild(td);tbody.appendChild(tr);
+ });
+ $("empty").style.display=state.history.length?"none":"block";
+}
+function record(amount,label){
+ amount=cents(amount);
+ if(!amount)return;
+ state.saved=Math.max(0,cents(state.saved+amount));
+ state.history.push({
+  id:Date.now()+Math.random(),
+  date:new Date().toLocaleDateString(),
+  label,amount
+ });
+ persist();render();
+}
+$("saveSettings").onclick=()=>{
+ ["price","rate","shipping","extras","monthly"].forEach(id=>{
+  state[id]=Math.max(0,Number($(id).value)||0);
+ });
+ state.rate=Math.min(30,state.rate);
+ persist();render();
+};
+$("setBalance").onclick=()=>{
+ const value=cents(Math.max(0,Number($("balance").value)||0));
+ const difference=cents(value-state.saved);
+ state.saved=value;
+ if(difference!==0)state.history.push({
+  id:Date.now()+Math.random(),
+  date:new Date().toLocaleDateString(),
+  label:"Balance adjustment",amount:difference
+ });
+ persist();render();
+};
+$("add").onclick=()=>{
+ const n=Number($("deposit").value);
+ if(n>0){record(n,"Deposit");$("deposit").value="";}
+};
+$("subtract").onclick=()=>{
+ const n=Number($("withdraw").value);
+ if(n>0){
+  const actual=Math.min(cents(n),state.saved);
+  if(actual>0)record(-actual,"Withdrawal");
+  $("withdraw").value="";
+ }
+};
+$("clearHistory").onclick=()=>{
+ if(confirm("Clear activity history? Your saved balance will remain.")){
+  state.history=[];persist();render();
+ }
+};
+$("export").onclick=()=>{
+ const blob=new Blob([JSON.stringify(state,null,2)],{type:"application/json"});
+ const url=URL.createObjectURL(blob);
+ const a=document.createElement("a");
+ a.href=url;a.download="macbook-neo-savings-backup.json";
+ a.click();URL.revokeObjectURL(url);
+};
+$("importButton").onclick=()=>$("importFile").click();
+$("importFile").onchange=async e=>{
+ const file=e.target.files[0];if(!file)return;
+ try{
+  const data=JSON.parse(await file.text());
+  if(typeof data.price!=="number"||!Array.isArray(data.history))throw Error();
+  state={...defaults,...data};persist();render();
+  alert("Backup restored successfully.");
+ }catch(err){alert("That backup file is not valid.");}
+ e.target.value="";
+};
+load();render();
+})();
+</script>
+</body>
+</html>
